@@ -39,7 +39,15 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
+## Testing
 
+This project uses `pytest` for automated testing.
+
+To run the tests:
+
+```bash
+pytest
+```
 7. Open http://127.0.0.1:5000 in your browser.
 
 ## Project Instructions
@@ -58,3 +66,21 @@ Use GitHub Copilot to refactor the code for this game to add more advanced featu
 - The game should be responsive and work well on both desktop and mobile devices.
 - UI colors should be visually appealing and accessible.
 - Completed and correct puzzles should display a congratulatory message with the time taken and hints used and ask for the user's name for Top 10 times.
+
+# Sudoku Game
+
+## Install
+
+pip install -r requirements.txt
+
+## Run the application
+
+python app.py
+
+Open:
+
+http://127.0.0.1:5000
+
+## Run tests
+
+pytest
