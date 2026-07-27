@@ -32,6 +32,27 @@ def new_game():
             difficulty = DEFAULT_DIFFICULTY
 
     puzzle, solution = sudoku_logic.generate_puzzle(clues)
+
+    for i in range(sudoku_logic.SIZE):
+        for j in range(sudoku_logic.SIZE):
+            if puzzle[i][j] == 0:
+                if solution[i][j] == 1:
+                    for r in range(sudoku_logic.SIZE):
+                        for c in range(sudoku_logic.SIZE):
+                            if puzzle[r][c] == 1:
+                                puzzle[r][c] = 2
+                            elif puzzle[r][c] == 2:
+                                puzzle[r][c] = 1
+
+                            if solution[r][c] == 1:
+                                solution[r][c] = 2
+                            elif solution[r][c] == 2:
+                                solution[r][c] = 1
+                break
+        else:
+            continue
+        break
+
     CURRENT['puzzle'] = puzzle
     CURRENT['solution'] = solution
     return jsonify({'puzzle': puzzle, 'difficulty': difficulty, 'clues': clues})
@@ -66,6 +87,7 @@ def check_solution():
     solution = CURRENT.get('solution')
     if solution is None:
         return jsonify({'error': 'No game in progress'}), 400
+
     incorrect = []
     incomplete = False
     for i in range(sudoku_logic.SIZE):
@@ -75,6 +97,7 @@ def check_solution():
                 incomplete = True
             elif value != solution[i][j]:
                 incorrect.append([i, j])
+
     solved = not incorrect and not incomplete
     return jsonify({'incorrect': incorrect, 'solved': solved})
 
