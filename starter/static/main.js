@@ -143,13 +143,54 @@ function createBoardElement() {
       input.dataset.row = i;
       input.dataset.col = j;
       input.addEventListener('input', (e) => {
-        const val = e.target.value.replace(/[^1-9]/g, '');
-        e.target.value = val;
-        e.target.classList.remove('incorrect');
-      });
+// Copilot initially suggested validating conflicts only when
+// the user pressed "Check Puzzle".
+//
+// I changed this implementation so conflicts are highlighted
+// immediately after each input, which better satisfies the
+// project rubric and provides instant visual feedback.
+
+// sanitize input
+  // sanitize input
+  const val = e.target.value.replace(/[^1-9]/g, '');
+  e.target.value = val;
+
+  // Recompute and mark all conflicts across the board
+  markAllConflicts();
+});
       rowDiv.appendChild(input);
     }
     boardDiv.appendChild(rowDiv);
+  }
+}
+
+// Mark every conflicting pair on the board (row/col/box duplicates)
+function markAllConflicts() {
+  const boardDiv = document.getElementById('sudoku-board');
+  if (!boardDiv) return;
+  const inputs = Array.from(boardDiv.getElementsByTagName('input'));
+  // clear previous
+  inputs.forEach(inp => inp.classList.remove('incorrect'));
+
+  const vals = inputs.map(inp => inp.value);
+
+  for (let a = 0; a < vals.length; a++) {
+    if (!vals[a]) continue;
+    for (let b = a + 1; b < vals.length; b++) {
+      if (!vals[b]) continue;
+      if (vals[a] !== vals[b]) continue;
+
+      const ra = Math.floor(a / SIZE), ca = a % SIZE;
+      const rb = Math.floor(b / SIZE), cb = b % SIZE;
+      const sameRow = ra === rb;
+      const sameCol = ca === cb;
+      const sameBox = (Math.floor(ra / 3) === Math.floor(rb / 3) && Math.floor(ca / 3) === Math.floor(cb / 3));
+
+      if (sameRow || sameCol || sameBox) {
+        inputs[a].classList.add('incorrect');
+        inputs[b].classList.add('incorrect');
+      }
+    }
   }
 }
 
@@ -163,15 +204,23 @@ function renderPuzzle(puz) {
       const idx = i * SIZE + j;
       const val = puzzle[i][j];
       const inp = inputs[idx];
-      if (val !== 0) {
-        inp.value = val;
-        inp.disabled = true;
-        inp.className += ' prefilled';
-      } else {
-        inp.value = '';
-        inp.disabled = false;
-      }
+      const blockClass =
+  ((Math.floor(i / 3) + Math.floor(j / 3)) % 2 === 0)
+    ? 'block-light'
+    : 'block-dark';
+
+if (val !== 0) {
+  inp.value = val;
+  inp.disabled = true;
+  inp.className = `sudoku-cell ${blockClass} prefilled`;
+} else {
+  inp.value = '';
+  inp.disabled = false;
+  inp.className = `sudoku-cell ${blockClass}`;
+}
     }
+  // mark any existing conflicts after rendering
+  markAllConflicts();
   }
 }
 
@@ -212,9 +261,17 @@ async function requestHint() {
   const idx = data.row * SIZE + data.col;
   const input = inputs[idx];
   input.value = data.value;
-  input.disabled = true;
-  input.className = 'sudoku-cell prefilled';
+input.disabled = true;
+
+const blockClass =
+  ((Math.floor(data.row / 3) + Math.floor(data.col / 3)) % 2 === 0)
+    ? 'block-light'
+    : 'block-dark';
+
+input.className = `sudoku-cell ${blockClass} prefilled`;
   setMessage(`Hint revealed at row ${data.row + 1}, col ${data.col + 1}`, '#388e3c');
+  // update conflict highlighting after hint
+  markAllConflicts();
 }
 
 async function checkSolution() {
@@ -241,15 +298,29 @@ async function checkSolution() {
     msg.innerText = data.error;
     return;
   }
-  const incorrect = new Set(data.incorrect.map(x => x[0]*SIZE + x[1]));
-  for (let idx = 0; idx < inputs.length; idx++) {
-    const inp = inputs[idx];
-    if (inp.disabled) continue;
-    inp.className = 'sudoku-cell';
+  const incorrect = new Set(data.incorrect.map(x => x[0] * SIZE + x[1]));
+
+for (let idx = 0; idx < inputs.length; idx++) {
+  const inp = inputs[idx];
+
+  const row = Math.floor(idx / SIZE);
+  const col = idx % SIZE;
+
+  const blockClass =
+    ((Math.floor(row / 3) + Math.floor(col / 3)) % 2 === 0)
+      ? 'block-light'
+      : 'block-dark';
+
+  if (inp.disabled) {
+    inp.className = `sudoku-cell ${blockClass} prefilled`;
+  } else {
+    inp.className = `sudoku-cell ${blockClass}`;
+
     if (incorrect.has(idx)) {
-      inp.className = 'sudoku-cell incorrect';
+      inp.classList.add('incorrect');
     }
   }
+}
   if (data.solved) {
     stopTimer();
     gameCompleted = true;

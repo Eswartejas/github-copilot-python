@@ -8,7 +8,6 @@ DIFFICULTY_CLUES = {
     'medium': 35,
     'hard': 25,
 }
-
 def deep_copy(board):
     return copy.deepcopy(board)
 
